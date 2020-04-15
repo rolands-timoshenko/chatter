@@ -1,0 +1,28 @@
+.root {
+  &__card {
+    border: 1px solid darkgray;
+    padding: 30px 20px 20px;
+    &__error {
+      color: darkred;
+      padding: 5px 0 20px;
+      text-align: center;
+    }
+  }
+  &__form {
+    display: flex;
+    &__field {
+      border: 1px solid darkgray;
+      padding: 10px 10px;
+    }
+
+    &__button {
+      border: 1px solid darkgray;
+      margin-left: -1px;
+      cursor: pointer;
+      padding: 10px 20px;
+      &:hover {
+        background-color: lightgrey;
+      }
+    }
+  }
+}

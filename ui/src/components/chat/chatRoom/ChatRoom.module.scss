@@ -1,0 +1,30 @@
+.root {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  border: 1px solid darkgrey;
+  display: flex;
+  flex-direction: column;
+  &__content {
+    flex-grow: 1;
+    border: 1px solid darkgrey;
+    margin: 10px;
+    padding: 10px;
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+  }
+
+  &__form {
+    margin-top: auto;
+    display: flex;
+    padding: 10px;
+    &__field {
+      resize: none;
+    }
+  }
+}
