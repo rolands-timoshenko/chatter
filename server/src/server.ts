@@ -2,7 +2,7 @@ import cors from "cors";
 import express, { Request } from "express";
 import expressWs from "express-ws";
 import * as Websocket from "ws";
-import { clients, removeClient, addClient } from "./clients";
+import { clients, removeClient, addClient, destroyAll } from "./clients";
 import { eventLogger, requestLogger } from "./logger";
 import {
   Client,
@@ -18,7 +18,7 @@ import { createClientMessage, setClientInactivityListener } from "./helpers";
 
 const clientInactivityTimeout = process.env.CLIENT_INACTIVITY_TIMEOUT
   ? Number(process.env.CLIENT_INACTIVITY_TIMEOUT)
-  : 10000;
+  : 1000 * 30;
 
 const serverPort = process.env.SERVER_PORT
   ? Number(process.env.SERVER_PORT)
@@ -30,7 +30,6 @@ app.use(cors());
 
 app.ws(
   "/chat/:username",
-  // Validate new client connection
   NewClientValidationMiddleware,
   (ws: Websocket, req: Request) => {
     requestLogger.info({
@@ -49,7 +48,7 @@ app.ws(
           ip: req.ip,
           user: newClient.username,
           event: `OnMessage`,
-          message: msg,
+          msg,
         });
 
         // ensure client message is valid
@@ -74,27 +73,42 @@ app.ws(
       });
 
       newClient.on("close", (code: number, reason?: string) => {
+        // store message about why client being disconnected
+        let clientMessage = "";
+
+        switch (code) {
+          case ConnectionCloseCodes.INACTIVITY:
+            clientMessage = "Disconnected due inactivity";
+            break;
+
+          case ConnectionCloseCodes.CLIENT_DISCONNECT:
+            clientMessage = "Left chat";
+            break;
+
+          default:
+            clientMessage = "Disconnected";
+        }
+
         requestLogger.info({
           ip: req.ip,
           event: "OnClose",
           user: `${newClient.username}`,
-          message: `Code: ${code}, Reason: ${reason}`,
+          msg: `${code} - ${reason || clientMessage}`,
         });
-        // Notify all connected clients about client being discoinnected
-        clients
-          .filter((client) => client.username !== newClient.username)
-          .forEach((client) =>
-            client.send(
-              createClientMessage(
-                ServerMessages.CLIENT_DISCONNECT,
-                newClient.username,
-                reason && `[${reason}]`
-              )
-            )
-          );
 
         // Remove disconnected client
         removeClient(newClient);
+
+        // Broadcast message to all connected clients
+        clients.forEach((client) =>
+          client.send(
+            createClientMessage(
+              ServerMessages.CLIENT_DISCONNECT,
+              newClient.username,
+              clientMessage
+            )
+          )
+        );
       });
 
       // Notify all clients about new client joined
@@ -127,9 +141,10 @@ app.ws(
         ip: req.ip,
         user: newClient.username,
         event: `OnSetup`,
-        message: err.message,
+        msg: err.message,
       });
-      newClient.close(ConnectionCloseCodes.SETUP, err.message);
+
+      newClient.close(ConnectionCloseCodes.ERROR, err.message);
       removeClient(newClient);
     }
   }
@@ -141,13 +156,16 @@ const server = app.listen(serverPort, () => {
 
 const shutdown = (): void => {
   eventLogger.info("Server shutdown.");
-  // All clients will be notified by close code 1006
-  server.close((err: Error): void => {
-    setTimeout(() => process.exit(0));
+  clients.forEach((client) => {
+    client.close(ConnectionCloseCodes.SERVER);
+  });
+  server.close((err: Error) => {
     if (err) {
       eventLogger.error(`Server shutdown failed with error: ${err.message}`);
+      process.exit(1);
     } else {
-      eventLogger.info("Server shutdown success.");
+      eventLogger.info("Server shutdown successfully.");
+      process.exit(0);
     }
   });
 };
@@ -155,3 +173,13 @@ const shutdown = (): void => {
 process.on("SIGINT", shutdown);
 
 process.on("SIGTERM", shutdown);
+
+/*
+  Some thoughts:
+  
+  Currently all communication is done over websocket connection. 
+  But http connection could be used as well. For ex. could use it for handling {method:POST,  path:/register data:{username: "tester"}}
+  would validate it using express-validator and response will return token="some generated token"
+  which later could be used  ws://domain/:token for establish ws connection
+  Also client messages could be sent over http post and validate as normal request data with middleware.
+*/

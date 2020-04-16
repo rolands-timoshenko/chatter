@@ -1,9 +1,9 @@
 .root {
   position: absolute;
-  top: 5px;
-  left: 5px;
-  right: 5px;
-  bottom: 5px;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
   border: 1px solid darkgrey;
   display: flex;
   flex-direction: column;
@@ -12,19 +12,13 @@
     border: 1px solid darkgrey;
     margin: 10px;
     padding: 10px;
-    ul {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
+    overflow: scroll;
   }
 
-  &__form {
+  &__actions {
     margin-top: auto;
     display: flex;
     padding: 10px;
-    &__field {
-      resize: none;
-    }
+    min-height: 200px;
   }
 }

@@ -1,13 +1,23 @@
 import winston, { createLogger, transports, format } from "winston";
+import { CustomRequestLoggerMessage } from "./models";
 
 export type Logger = winston.Logger;
 
 export const requestLogger = createLogger({
   format: format.combine(
     format.timestamp({ format: "YYYY-MM-DD HH:mm:ss:ms" }),
-    format.printf(({ level, message, event, timestamp, ip }) => {
-      return `${timestamp} ${ip} ${event} ${level}: ${message}`;
-    })
+    format.printf(
+      ({ timestamp, level, message }: CustomRequestLoggerMessage) => {
+        if (typeof message !== "string") {
+          const { ip, user, event, msg } = message;
+          message = `[ip:${ip}] [user:${user}] [event:${event}]`;
+          if (msg) {
+            message += ` [msg: ${msg}]`;
+          }
+        }
+        return `${timestamp} [${level}]: ${message}`;
+      }
+    )
   ),
   transports: [
     new transports.File({

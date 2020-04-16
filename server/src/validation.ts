@@ -30,9 +30,9 @@ export const NewClientValidationMiddleware = (
       ip: req.ip,
       event: "OnUsernameValidation",
       user: username,
-      message: err.message,
+      msg: err.message,
     });
-    ws.close(ConnectionCloseCodes.REGISTER, err.message);
+    ws.close(ConnectionCloseCodes.ERROR, err.message);
   }
 };
 

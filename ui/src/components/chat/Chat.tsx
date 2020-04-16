@@ -10,8 +10,16 @@ enum ServerMessages {
   CLIENT_CONNECTED,
 }
 
+enum ServerConnectionCloseCode {
+  NOT_RESPOND = 1006,
+  CLIENT_DISCONNECTION = 4000,
+  SERVER = 4003,
+}
+
+const wsApi = "ws://192.168.8.100:5000/chat/";
+
 export type ClientMessage = {
-  type: ServerMessages;
+  type?: ServerMessages;
   username: string;
   message: string;
   timestamp: string;
@@ -47,21 +55,24 @@ class Chat extends React.Component<Props, State> {
   };
 
   createConnection = (): void => {
-    this.socket = new WebSocket(
-      `ws://localhost:5000/chat/${this.state.username}`
-    );
+    this.socket = new WebSocket(`${wsApi}${this.state.username}`);
     this.socket.addEventListener("open", this.handleSocketOpen);
     this.socket.addEventListener("message", this.handleSocketMessage);
     this.socket.addEventListener("close", this.handleSocketClose);
   };
 
   handleSocketMessage = (event: MessageEvent): void => {
-    console.info("handleSocketMessage: ", event);
     const clientMessage: ClientMessage = JSON.parse(event.data);
     switch (clientMessage.type) {
       case ServerMessages.CLIENT_READY:
         this.setState({
           connected: true,
+          messages: [
+            {
+              ...clientMessage,
+              message: "[Joined]",
+            },
+          ],
         });
         break;
 
@@ -78,6 +89,17 @@ class Chat extends React.Component<Props, State> {
         break;
 
       case ServerMessages.CLIENT_DISCONNECT:
+        this.setState((prevState) => ({
+          messages: [
+            ...prevState.messages,
+            {
+              ...clientMessage,
+              message: `[${clientMessage.message}]`,
+            },
+          ],
+        }));
+        break;
+
       case ServerMessages.CLIENT_MSG:
         this.setState((prevState) => ({
           messages: [...prevState.messages, clientMessage],
@@ -85,42 +107,62 @@ class Chat extends React.Component<Props, State> {
         break;
 
       default:
-      // Log
+        console.error(`Unsupported server message type: ${clientMessage.type}`);
     }
   };
 
-  handleSocketOpen = (event: Event): void => {
-    console.info("handleSocketOpen: ", event);
+  handleSocketOpen = (_event: Event): void => {
+    //
   };
 
   handleSocketClose = (event: CloseEvent): void => {
+    console.info(event);
     const { reason, code } = event;
-    console.info(code, reason);
-    // 1006 when server is not responding
-    // 3000 when client disconnects him self
+    let error = null;
+
+    switch (code) {
+      case ServerConnectionCloseCode.NOT_RESPOND:
+      case ServerConnectionCloseCode.SERVER:
+        error = "Server is not responding";
+        break;
+
+      case ServerConnectionCloseCode.CLIENT_DISCONNECTION:
+        error = `Good bye ${this.state.username}`;
+        break;
+
+      default:
+        error = reason;
+    }
+
     this.setState(
       {
-        error: reason,
+        error: error,
         connected: false,
         messages: [],
+        username: "",
       },
       () => {
         this.socket = null;
-        console.info(event);
       }
     );
   };
 
   handleDisconnect = (): void => {
-    this.socket && this.socket.close(3000);
+    this.socket &&
+      this.socket.close(ServerConnectionCloseCode.CLIENT_DISCONNECTION);
   };
 
-  handleMessageSubmit = (message: string) => {
+  handleMessageSubmit = (message: string): void => {
     this.socket && this.socket.send(message);
   };
 
   componentWillUnmount() {
-    this.socket = null;
+    if (this.socket) {
+      this.socket.removeEventListener("open", this.handleSocketOpen);
+      this.socket.removeEventListener("message", this.handleSocketMessage);
+      this.socket.removeEventListener("close", this.handleSocketClose);
+      this.socket = null;
+    }
   }
 
   render(): JSX.Element {

@@ -1,5 +1,5 @@
 {
-  "name": "nodejs-api",
+  "name": "chatter-server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -29,7 +29,6 @@
     "@types/express-validator": "^3.0.0",
     "@types/express-ws": "^3.0.0",
     "@types/node": "^13.9.8",
-    "@types/node-json-db": "^0.9.3",
     "@types/winston": "^2.4.4",
     "prettier": "2.0.2",
     "rimraf": "^3.0.2",

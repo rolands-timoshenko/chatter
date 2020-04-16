@@ -17,12 +17,12 @@ export const setClientInactivityListener = (
   clientInactivityTimeout: number,
   msg: string
 ): void => {
-  // On every client message inactivity timeout being reset
+  // On every function call inactivity timeout should reset
   if (client.timeoutId) {
     clearTimeout(client.timeoutId);
   }
 
-  // Set inactivity timeout
+  // Set new inactivity timeout
   client.timeoutId = setTimeout(() => {
     client.close(ConnectionCloseCodes.INACTIVITY, msg);
   }, clientInactivityTimeout);

@@ -1,4 +1,5 @@
 import * as Websocket from "ws";
+import { TransformableInfo } from "logform";
 
 export type Client = {
   username?: string;
@@ -15,7 +16,19 @@ export enum ServerMessages {
 export type ClientMessage = string;
 
 export enum ConnectionCloseCodes {
-  REGISTER = 4000,
-  SETUP = 4001,
+  CLIENT_DISCONNECT = 4000,
+  ERROR = 4001,
   INACTIVITY = 4002,
+  SERVER = 4003,
 }
+
+export type CustomRequestLoggerMessage = {
+  message:
+    | {
+        ip: string;
+        user: string;
+        event: string;
+        msg?: string;
+      }
+    | string;
+} & TransformableInfo;
