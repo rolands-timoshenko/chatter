@@ -10,7 +10,3 @@ export const removeClient = (client: Client): void => {
 export const addClient = (client: Client): void => {
   clients.push(client);
 };
-
-export const destroyAll = (): void => {
-  clients = [];
-};

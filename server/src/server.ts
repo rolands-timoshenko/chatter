@@ -2,7 +2,8 @@ import cors from "cors";
 import express, { Request } from "express";
 import expressWs from "express-ws";
 import * as Websocket from "ws";
-import { clients, removeClient, addClient, destroyAll } from "./clients";
+import { addClient, clients, removeClient } from "./clients";
+import { createClientMessage, setClientInactivityListener } from "./helpers";
 import { eventLogger, requestLogger } from "./logger";
 import {
   Client,
@@ -14,7 +15,6 @@ import {
   NewClientValidationMiddleware,
   validateClientMessage,
 } from "./validation";
-import { createClientMessage, setClientInactivityListener } from "./helpers";
 
 const clientInactivityTimeout = process.env.CLIENT_INACTIVITY_TIMEOUT
   ? Number(process.env.CLIENT_INACTIVITY_TIMEOUT)
@@ -178,8 +178,8 @@ process.on("SIGTERM", shutdown);
   Some thoughts:
   
   Currently all communication is done over websocket connection. 
-  But http connection could be used as well. For ex. could use it for handling {method:POST,  path:/register data:{username: "tester"}}
-  would validate it using express-validator and response will return token="some generated token"
+  But http connection could be used as well. For ex. could use it for handling request {method:POST,  path:/register data:{username: "tester"}}
+  validate it using express-validator and  for response return token="some generated token"
   which later could be used  ws://domain/:token for establish ws connection
   Also client messages could be sent over http post and validate as normal request data with middleware.
 */

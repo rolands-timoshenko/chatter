@@ -16,7 +16,7 @@ enum ServerConnectionCloseCode {
   SERVER = 4003,
 }
 
-const wsApi = "ws://192.168.8.100:5000/chat/";
+const wsApi = "ws://localhost:5000/chat/";
 
 export type ClientMessage = {
   type?: ServerMessages;
