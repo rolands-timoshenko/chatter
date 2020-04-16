@@ -25,7 +25,7 @@ const ChatRoom = (props: Props): JSX.Element => {
           messages={props.messages}
           onMessagesRendered={handleMessagesRendered}
         />
-        <div style={{ float: "left", clear: "both" }} ref={contentRef}></div>
+        <div className={styles.root__content__scrollTo} ref={contentRef}></div>
       </div>
       <div className={styles.root__actions}>
         <ChatRoomActions

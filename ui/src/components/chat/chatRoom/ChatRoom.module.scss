@@ -13,6 +13,10 @@
     margin: 10px 10px 0;
     padding: 10px;
     overflow: scroll;
+    &__bottom {
+      float: left;
+      clear: both;
+    }
   }
 
   &__actions {
